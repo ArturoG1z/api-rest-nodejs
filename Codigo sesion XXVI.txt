@@ -1,0 +1,208 @@
+1. Crear modelo
+2. Crear controlador (quitar rutas)
+3. Crear ruta por cada función 
+4. Crear metodos para tratar los datos CRUD 
+
+====================
+
+Esqueleto del controlador:  
+
+'use strict'
+
+var controller = {
+	
+	home: function(){
+		
+		
+	},
+
+	test: function(){
+		
+		}
+	
+};
+
+module.exports = controller;
+
+(checar consola) 
+
+=====================
+
+
+
+
+MODELO
+
+'use strict'
+
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+var ProyectoSchema = Schema({
+	nombre: String,
+	semestre: String,
+	materia: String, 
+	anio:  Number, 
+	imagen:  String
+});
+
+module.exports = mongoose.model('Proyecto', ProyectoSchema);
+
+
+===================================
+
+
+CONTROLADOR
+
+'use strict'
+
+var Proyecto = require('../models/proyecto');
+
+var controller = {
+	
+	home: function(req, res){
+		return res.status(200).send({
+			message: 'Página home'
+		});
+	},
+
+	test: function(req, res){
+		return res.status(200).send({
+			message: "Método Test Controlador Proyecto"
+		});
+	},
+
+	saveProyecto: function(req, res){
+		var proyecto = new Proyecto();
+
+		var params = req.body;
+
+		proyecto.nombre = params.nombre;
+		proyecto.semestre = params.semestre;
+		proyecto.materia = params.materia;
+		proyecto.anio = params.anio;
+		proyecto.imagen = null;
+
+		proyecto.save((err, proyectoStored) => {
+			if(err) return res.status(500).send({message: 'Error al guardar el documento.'});
+
+			if(!proyectoStored) return res.status(404).send({message: 'No se ha podido guardar el proyecto.'});
+
+			return res.status(200).send({proyecto: proyectoStored});
+		});
+	},
+
+	getProyecto: function(req, res){
+		var proyectoId = req.params.id;
+
+		if(proyectoId == null) return res.status(404).send({message: 'El proyecto no existe.'});
+
+		Proyecto.findById(proyectoId, (err, proyecto) => {
+
+			if(err) return res.status(500).send({message: 'Error al devolver los datos.'});
+
+			if(!proyecto) return res.status(404).send({message: 'El proyecto no existe.'});
+
+			return res.status(200).send({
+				proyecto
+			});
+
+		});
+	},
+
+	getProyectos: function(req, res){
+
+		Proyecto.find({}).sort('-year').exec((err, proyectos) => {
+
+			if(err) return res.status(500).send({message: 'Error al devolver los datos.'});
+
+			if(!proyectos) return res.status(404).send({message: 'No hay proyectoos que mostrar.'});
+
+			return res.status(200).send({proyectos});
+		});
+
+	},
+
+	updateProyecto: function(req, res){
+		var proyectoId = req.params.id;
+		var update = req.body;
+
+		Proyecto.findByIdAndUpdate(proyectoId, update, {new:true}, (err, proyectoUpdated) => {
+			if(err) return res.status(500).send({message: 'Error al actualizar'});
+
+			if(!proyectoUpdated) return res.status(404).send({message: 'No existe el proyecto para actualizar'});
+
+			return res.status(200).send({
+				proyecto: proyectoUpdated
+			});
+		});
+
+	},
+
+	deleteProyecto: function(req, res){
+		var proyectoId = req.params.id;
+
+		Proyecto.findByIdAndRemove(proyectoId, (err, proyectoRemoved) => {
+			if(err) return res.status(500).send({message: 'No se ha podido borrar el proyecto'});
+
+			if(!proyectoRemoved) return res.status(404).send({message: "No se puede eliminar ese proyecto."});
+
+			return res.status(200).send({
+				proyecto: proyectoRemoved
+			});
+		});
+	}
+
+
+}; 
+
+module.exports = controller; 
+
+============================
+
+RUTAS
+
+'use strict'
+
+var express = require('express');
+var ProyectoController = require('../controllers/proyecto');
+
+var router = express.Router();
+
+router.get('/home', ProyectoController.home);
+router.post('/test', ProyectoController.test);
+router.post('/save-proyecto', ProyectoController.saveProyecto);
+router.get('/proyecto/:id?', ProyectoController.getProyecto);
+router.get('/proyectos', ProyectoController.getProyectos);
+router.put('/proyecto/:id', ProyectoController.updateProyecto);
+router.delete('/proyecto/:id', ProyectoController.deleteProyecto);
+
+
+module.exports = router;
+
+===============================
+
+APP.JS
+
+'use strict'
+
+var express = require('express');
+var bodyParser = require('body-parser');
+
+var app = express();
+
+// cargar archivos rutas
+var proyecto_routes = require('./routes/proyecto');
+
+// middlewares
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json());
+
+// rutas
+app.use('/api', proyecto_routes);
+
+
+// exportar
+module.exports = app;
+
+=========================
