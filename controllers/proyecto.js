@@ -1,7 +1,7 @@
 'use strict';
 let Proyecto = require('../models/proyecto');
 let fs = require('fs');
-
+const isWin = process.platform === 'win32';
 let controller = {
 	home(req, res) {
 		console.log(req.body.nombre);
@@ -92,10 +92,9 @@ let controller = {
 	uploadImage(req, res){
 		let proyectoId = req.params.id;
 		let fileName = "Imagen no subida";
-		
 		if(req.files) {
 			let filePath = req.files.imagen.path;
-			let fileSplit = filePath.split('/');
+			let fileSplit = isWin ? filePath.split('\\') : filePath.split('/');
 			let fileName = fileSplit[1];
 			let extSplit = fileName.split('\.');
 			let fileExt = extSplit[1];
