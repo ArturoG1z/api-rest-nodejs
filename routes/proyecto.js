@@ -13,5 +13,5 @@ router.post('/proyecto/save', ProyectoController.save);
 router.patch('/proyecto/:id', ProyectoController.update);
 router.delete('/proyecto/:id', ProyectoController.delete);
 router.patch('/upload-image/:id', multipartMiddleware, ProyectoController.uploadImage);
-
+router.get('/get-image/:image', ProyectoController.getImageFile);
 module.exports = router;
